@@ -49,7 +49,7 @@ gcloud run deploy $SERVICE_NAME \
     --cpu 2 \
     --timeout 300 \
     --concurrency 1 \
-    --max-instances 10 \
+    --max-instances 5 \
     --port 8080 \
     --project $PROJECT_ID
 

@@ -31,7 +31,7 @@ steps:
       - '--concurrency'
       - '1'    # Process one request at a time due to heavy AI workload
       - '--max-instances'
-      - '10'   # Limit instances to control costs
+      - '5'   # Limit instances to control costs
       - '--port'
       - '8080'
 
