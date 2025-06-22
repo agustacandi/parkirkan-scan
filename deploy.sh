@@ -50,6 +50,7 @@ gcloud run deploy $SERVICE_NAME \
     --timeout 300 \
     --concurrency 1 \
     --max-instances 5 \
+    --startup-cpu-boost \
     --port 8080 \
     --project $PROJECT_ID
 
