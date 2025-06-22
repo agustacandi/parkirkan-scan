@@ -1,0 +1,40 @@
+# Use Python 3.11 slim as base image
+FROM python:3.11-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies required for OpenCV and other libraries
+RUN apt-get update && apt-get install -y \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    libgomp1 \
+    libgoogle-perftools4 \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Copy requirements first for better caching
+COPY requirements.txt .
+
+# Optimize pip installation with reduced dependencies
+RUN pip install --no-cache-dir --upgrade pip==24.0 && \
+    pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu torch==2.7.1+cpu && \
+    pip install --no-cache-dir --timeout 1000 -r requirements.txt && \
+    pip cache purge
+
+# Copy application code and model
+COPY rest_api_v2.py .
+COPY v9.pt .
+
+# Create non-root user for security
+RUN useradd --create-home --shell /bin/bash app && \
+    chown -R app:app /app
+USER app
+
+# Expose port
+EXPOSE 8080
+
+# Use exec form for CMD to handle signals properly
+CMD ["uvicorn", "rest_api_v2:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "1"]
