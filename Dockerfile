@@ -1,22 +1,25 @@
-# Gunakan image dasar yang sudah mendukung PyTorch dan CUDA (untuk GPU)
-# Image ini sudah memiliki semua driver dan library yang diperlukan.
-FROM pytorch/pytorch:1.13.1-cuda11.6-cudnn8-runtime
+# Dockerfile
+FROM python:3.11-slim
 
-# Tentukan direktori kerja di dalam kontainer
+# 1) System libs untuk OpenCV & multimedia
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgl1 libglib2.0-0 libsm6 libxrender1 libxext6 ffmpeg ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
 WORKDIR /app
-
-# Salin file requirements.txt dan instal dependensi
-# Mengapa terpisah? Ini akan mempercepat proses build Docker karena layer pip akan di-cache
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install -U pip && pip install -r requirements.txt
 
-# Salin semua file proyek Anda ke dalam kontainer
-# File .dockerignore yang sudah Anda miliki akan memastikan file tidak penting tidak ikut
+# salin source
 COPY . .
 
-# Cloud Run akan menggunakan port 8080 secara default
+# 2) Pastikan listen ke 0.0.0.0 dan pakai PORT dari env Cloud Run
 ENV PORT=8080
+# Opsional: hindari oversubscription CPU
+ENV OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 NUMEXPR_NUM_THREADS=2 TORCH_NUM_THREADS=2
 
-# Jalankan server uvicorn saat kontainer dimulai
-# Pastikan nama file Python Anda benar (rest_api_v2) dan nama variabel FastAPI (app) juga benar
-CMD ["uvicorn", "rest_api_v2:app", "--host", "0.0.0.0", "--port", "8080"]
+# 3) Jalankan uvicorn langsung (ubah modul kalau bukan rest_api_v2:app)
+CMD ["sh","-c","exec uvicorn rest_api_v2:app --host 0.0.0.0 --port ${PORT} --workers 1 --proxy-headers --forwarded-allow-ips='*'"]
