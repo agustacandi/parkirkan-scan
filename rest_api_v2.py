@@ -19,7 +19,7 @@ device = None  # Untuk GPU jika ada
 # --- Adaptasi fungsi dari skrip parkirkan-trocr-v2.py ---
 
 def load_yolo_model_server():
-    model_path = "v9.pt"  # Pastikan path ini benar di dalam container
+    model_path = os.getenv("YOLO_MODEL_PATH", "v9.pt")  # Pastikan path ini benar di dalam container
     if not os.path.exists(model_path):
         # Di lingkungan server, model harus ada atau berikan error jelas
         raise RuntimeError(f"Model YOLO '{model_path}' tidak ditemukan.")
